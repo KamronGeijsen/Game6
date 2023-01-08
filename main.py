@@ -13,7 +13,7 @@ def run():
 
 
     # Set the height and width of the screen
-    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
+    screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE | pygame.FULLSCREEN)
     pygame.display.set_caption("Game6")
     # bitscreen = pygame.surface.Surface((TILE * WIDTH_BLOCKS, TILE * HEIGHT_BLOCKS))
 
@@ -62,10 +62,12 @@ def run():
                     track.track_finger_count[track_num] += 1
                     # print("DOWN", track_num, track.track_finger_count)
 
+        track.get_expected_lines()
+        track.scroller()
+
         bitscreen = pygame.surface.Surface((WIDTH, HEIGHT))
         bitscreen.fill((0, 0, 0))
 
-        track.get_expected_lines()
         track.draw(bitscreen)
 
         screen.blit(bitscreen, [0, 0])

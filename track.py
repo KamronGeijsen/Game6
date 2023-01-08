@@ -9,7 +9,7 @@ import scipy
 
 
 BPM = 148/4
-slider_speed = 4
+slider_speed = 1
 
 screen_height = 100
 screen_width = 100
@@ -17,20 +17,34 @@ track_width = 1000*0.5
 note_width = track_width/8
 note_height = note_width/5
 note_space = note_width*slider_speed
-scroll = -4
+scroll = -2
+
 
 file = "tracks/Toby Fox - Undertale - Death by Glamour.wav"
 sample_rate, samples = scipy.io.wavfile.read(file)
 # frequencies, times, spectrogram = scipy.signal.spectrogram(samples, sample_rate)
 # print(len(spectrogram))
 track_x = (1000-track_width)/2
+track_bar = screen_height*0.1
 track_scroll_offset = 0.09
+track_bar_scroll = track_bar / (note_space*4)
 
 print(sample_rate)
 # pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.mixer.init()
 track_mixer = pygame.mixer.Sound(file)
 tick_mixer = pygame.mixer.Sound("tick1.mp3")
+
+sub_bars = 4
+
+# def start_from():
+#     sec_delay = (scroll+track_scroll_offset)/ (BPM / 60 * sub_bars)
+#     sample_delay = sample_rate * sec_delay
+#     print(sec_delay, sample_delay)
+#     print(len(pygame.mixer.Sound("tick1.mp3").get_raw()))
+#     raw_data = pygame.mixer.Sound("tick1.mp3").get_raw()[int(sample_delay):]
+#     return pygame.mixer.Sound(buffer=raw_data)
+
 
 class Note:
     def __init__(self, x, y, w=1):
@@ -41,11 +55,13 @@ class Note:
 
 
 class LongNote:
-    def __init__(self, x, y, h, w=1):
+    def __init__(self, x, y, next, w=1):
+        # self.
         self.x = x
         self.y = y
         self.w = w
-        self.h = h
+
+        self.h = next
 
 
 def undertale_generator():
@@ -74,9 +90,9 @@ def undertale_generator():
     yield LongNote(2, 46, 1)
     yield LongNote(5, 47, 1)
     yield LongNote(4, 48, 7)
-    yield LongNote(2, 55, 0.5)
-    yield LongNote(3, 55, 0.5)
-    yield LongNote(4, 55.5, 0.5)
+    yield LongNote(2, 55.25, 0.25)
+    yield LongNote(3, 55.5, 0.25)
+    yield LongNote(4, 55.75, 0.25)
     yield LongNote(5, 56, 8)
 
     melody2 = [
@@ -84,25 +100,23 @@ def undertale_generator():
         (2, 0.25),
         (1, 0.5),
         (0, 0.75),
-        (1, 1),
     ]
     for n, i in enumerate(range(64, 96, 8)):
         yield Note(n+0, i + 0)
-        yield Note(n+1, i + 0.5)
         yield Note(n+3, i + 1)
-        yield Note(n+2, i + 1.5)
         for p, d in melody2:
             yield Note(n+p, 2 + i + d)
-        yield Note(n+0, i + 3.5)
         yield Note(n+0, i + 4.5)
         yield Note(n+3, i + 5)
-        yield Note(n+2, i + 5.5)
         for p, d in melody2:
             yield Note(n+p, 6 + i + d)
-        yield Note(n+0, i + 7.5)
     for i in range(96, 128, 8):
-        yield Note(2, i)
-        yield Note(2, i)
+        yield LongNote(3, i, 0.5)
+        yield Note(2, i+0.75)
+        yield Note(3, i+1)
+        yield LongNote(4, i+1.25, .5)
+
+
     # time = 0
     # for i in range(4):
     #     for p, d in melody1:
@@ -111,10 +125,30 @@ def undertale_generator():
     # for i in range(4):
     #     for p, d in melody1:
     #         yield Note(p*2, time+d+i*8, 2)
+    # melody2 = [
+    #     (3, 0),
+    #     (2, 0.25),
+    #     (1, 0.5),
+    #     (0, 0.75),
+    #     (1, 1),
+    # ]
+    # for n, i in enumerate(range(64, 96, 8)):
+    #     yield Note(n+0, i + 0)
+    #     yield Note(n+1, i + 0.5)
+    #     yield Note(n+3, i + 1)
+    #     yield Note(n+2, i + 1.5)
+    #     for p, d in melody2:
+    #         yield Note(n+p, 2 + i + d)
+    #     yield Note(n+0, i + 3.5)
+    #     yield Note(n+0, i + 4.5)
+    #     yield Note(n+3, i + 5)
+    #     yield Note(n+2, i + 5.5)
+    #     for p, d in melody2:
+    #         yield Note(n+p, 6 + i + d)
+    #     yield Note(n+0, i + 7.5)
 
 
 notes: List[Note] = list(undertale_generator())
-sub_bars = 4
 
 track_finger_count = [0]*8
 last_track_finger_count = [0]*8
@@ -126,6 +160,8 @@ total_pixels = 0
 
 expected_lines_press = [0]*8
 expected_lines_hold = [0]*8
+
+
 def get_expected_lines():
     global last_track_finger_count
     LENIENCY = 0.2
@@ -155,7 +191,7 @@ def get_expected_lines():
 
 
 def generate_wave():
-    global note_width, note_space, wave_img, total_pixels
+    global note_width, note_space, wave_img, total_pixels, last_time, track_mixer
 
     img_width = note_width
     total_pixels = len(samples)/sample_rate*(BPM/60)*note_space*sub_bars
@@ -167,10 +203,15 @@ def generate_wave():
         sample_slice = samples[l:int(i)]
         max = (np.amax(sample_slice) + 32768) / 65536
         min = (np.amin(sample_slice) + 32768) / 65536
-        pygame.draw.line(wave_img[n//32768], (255, 255, 255), (min*img_width, n%32768), (max*img_width, n%32768))
+        pygame.draw.line(wave_img[n // 32768], (255, 255, 255), (min * img_width, n % 32768), (max * img_width, n % 32768))
         l = int(i)
         n-=1
-    print("done")
+    last_time = time.perf_counter()
+    # if scroll > 0:
+    #     track_mixer.stop()
+    #     print(scroll)
+    #     track_mixer = start_from()
+    #     track_mixer.play()
 
 
 def scroller():
@@ -183,11 +224,11 @@ def scroller():
 
     scroll += interval * BPM/60
     if old_scroll < -track_scroll_offset < scroll:
-        track_mixer.play(loops=0, maxtime=0, fade_ms=0)
+        track_mixer.play()
 
 
 def resize(event: pygame.event):
-    global track_x, track_width, note_width, note_height, note_space, screen_width, screen_height, last_time
+    global track_x, track_width, note_width, note_height, note_space, screen_width, screen_height, last_time, track_bar, track_bar_scroll
     screen_height = event.y
     screen_width = event.x
     track_width = screen_width*0.5
@@ -196,20 +237,35 @@ def resize(event: pygame.event):
     note_space = note_width*slider_speed
     track_x = (screen_width-track_width)/2
     last_time = time.perf_counter()
+    track_bar = screen_height * 0.1
+    track_bar_scroll = track_bar / (note_space*4)
+
+
+# def draw_feedback_animation(screen: pygame.Surface):
+#     screen.
 
 
 def draw(screen: pygame.Surface):
-    scroller()
+
+    # Finger press line lightup
 
     for i in range(8):
         if track_finger_count[i]:
-            screen.fill((16, 16, 16), (track_x+i*note_width, 0, note_width, screen_height))
+            pygame.draw.rect(screen, (16, 16, 16), pygame.Rect(track_x+i*note_width, 0, note_width, screen_height))
+
+    # Line borders (vert lines)
+
     for i in range(1, 8):
-        screen.fill((48, 48, 48), (track_x+i*note_width-note_width/100, 0, note_width/50, screen_height))
-    for i in np.arange(-(scroll-int(scroll))*note_space*sub_bars, screen_height, note_space*sub_bars):
+        pygame.draw.rect(screen, (48, 48, 48), pygame.Rect(track_x+i*note_width-note_width/100, 0, note_width/50, screen_height))
+
+    # Line Beat and quarter beats (horiz lines)
+
+    for i in np.arange(-(scroll-track_bar_scroll-int(scroll))*note_space*sub_bars, screen_height, note_space*sub_bars):
         for l in range(sub_bars):
-            screen.fill((64, 64, 64), (track_x, screen_height - i - note_height / 10 - l * note_space, track_width, note_height / 5))
-        screen.fill((128, 128, 128), (track_x, screen_height - i - note_height / 6, track_width, note_height / 3))
+            pygame.draw.rect(screen, (64, 64, 64), pygame.Rect(track_x, screen_height - i - note_height / 10 - l * note_space, track_width, note_height / 5))
+        pygame.draw.rect(screen, (128, 128, 128), pygame.Rect(track_x, screen_height - i - note_height / 6, track_width, note_height / 3))
+
+    # Feedback of what should be pressed and what you pressed
 
     for i in range(8):
         press = expected_lines_press[i] * 255
@@ -219,33 +275,37 @@ def draw(screen: pygame.Surface):
             c = (int(press*0.2), press, int(press*0.2))
         else:
             c = (int(hold * 0.2), hold, hold)
-        pygame.draw.rect(screen, c, pygame.Rect(100 * i, 5, 100, 20))
+        pygame.draw.rect(screen, c, pygame.Rect(50 * i, 5, 50, 20))
 
         c = 255 if track_finger_count[i] else 0
-        pygame.draw.rect(screen, (c, c, c), pygame.Rect(100 * i, 30, 100, 20))
+        pygame.draw.rect(screen, (c, c, c), pygame.Rect(50 * i, 30, 50, 20))
+        pygame.draw.line(screen, (128, 128, 128), (50 * i+50, 0), (50 * i+50, 50))
+        pygame.draw.line(screen, (128, 128, 128), (50 * i , 0), (50 * i, 50))
 
-
-    # pygame.draw.line(screen, (255, 255, 255), (track_x, scroll+note_space), (track_x, height))
-
-
+    # Notes
 
     for n in notes:
         if type(n) == LongNote:
-            pygame.draw.rect(screen, (255, 0, 128), pygame.Rect(track_x + n.x * note_width,
-                                        screen_height - n.y * note_space - note_height / 2 + note_space * sub_bars * scroll - note_space*n.h,
-                                        n.w * note_width,
-                                        note_height+note_space*n.h))
+            pygame.draw.rect(screen, (128, 0, 64), pygame.Rect(
+                track_x + n.x * note_width,
+                screen_height-track_bar - n.y * note_space - note_height / 2 + note_space * sub_bars * scroll - note_space*n.h,
+                n.w * note_width, note_height+note_space*n.h))
         else:
-            pygame.draw.rect(screen, (255, 0, 128), pygame.Rect(track_x+n.x*note_width, screen_height-n.y*note_space-note_height/2+note_space*sub_bars*scroll, n.w*note_width, note_height))
+            pygame.draw.rect(screen, (192, 32, 32), pygame.Rect(
+                track_x + n.x * note_width,
+                screen_height - track_bar - n.y * note_space - note_height / 2 + note_space * sub_bars * scroll,
+                n.w * note_width, note_height))
 
-    # sec_offs = scroll/(BPM/60)
+    # WAV
+
     i = -(screen_height-total_pixels+note_space*sub_bars*(scroll+track_scroll_offset))
-    screen.blit(wave_img[int(i)//32768], [track_x + track_width, -(i%32768)])
+    screen.blit(wave_img[int(i)//32768], [track_x + track_width, -(i%32768) - track_bar])
     if 32768-i%32768 < screen_height and i < total_pixels:
-        screen.blit(wave_img[int(i) // 32768 + 1], [track_x + track_width, -(i % 32768) + 32768])
-    # screen.blit(wave_img, [0, 0])
-    # print(note_space*sub_bars*scroll)
+        screen.blit(wave_img[int(i) // 32768 + 1], [track_x + track_width, -(i % 32768) + 32768 - track_bar])
+    pygame.draw.line(screen, (255, 255, 255), (track_x, screen_height-track_bar), (track_x+track_width, screen_height-track_bar))
 
-    # pygame.draw.line(screen, (255, 255, 255), (track_x, 0), (track_x, height))
-    # pygame.draw.line(screen, (255, 255, 255), (track_x+track_width, 0), (track_x+track_width, height))
+    # Vertical borders of the track
+
+    pygame.draw.rect(screen, (192, 192, 192), pygame.Rect(track_x - note_width / 50, 0, note_width / 25, screen_height))
+    pygame.draw.rect(screen, (192, 192, 192), pygame.Rect(track_x+track_width - note_width / 50, 0, note_width / 25, screen_height))
 
