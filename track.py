@@ -21,6 +21,8 @@ scroll = -4
 
 file = "tracks/Toby Fox - Undertale - Death by Glamour.wav"
 sample_rate, samples = scipy.io.wavfile.read(file)
+# frequencies, times, spectrogram = scipy.signal.spectrogram(samples, sample_rate)
+# print(len(spectrogram))
 track_x = (1000-track_width)/2
 track_scroll_offset = 0.09
 
@@ -28,6 +30,7 @@ print(sample_rate)
 # pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.mixer.init()
 track_mixer = pygame.mixer.Sound(file)
+tick_mixer = pygame.mixer.Sound("tick1.mp3")
 
 class Note:
     def __init__(self, x, y, w=1):
@@ -83,20 +86,23 @@ def undertale_generator():
         (0, 0.75),
         (1, 1),
     ]
-    for i in range(0,32,8):
-        yield Note(2, i + 64)
-        yield Note(3, i + 64.5)
-        yield Note(5, i + 65)
-        yield Note(4, i + 65.5)
+    for n, i in enumerate(range(64, 96, 8)):
+        yield Note(n+0, i + 0)
+        yield Note(n+1, i + 0.5)
+        yield Note(n+3, i + 1)
+        yield Note(n+2, i + 1.5)
         for p, d in melody2:
-            yield Note(2+p, 66 + i + d)
-        yield Note(2, i + 67.5)
-        yield Note(2, i + 68.5)
-        yield Note(5, i + 69)
-        yield Note(4, i + 69.5)
+            yield Note(n+p, 2 + i + d)
+        yield Note(n+0, i + 3.5)
+        yield Note(n+0, i + 4.5)
+        yield Note(n+3, i + 5)
+        yield Note(n+2, i + 5.5)
         for p, d in melody2:
-            yield Note(2+p, 70 + i + d)
-        yield Note(2, i + 71.5)
+            yield Note(n+p, 6 + i + d)
+        yield Note(n+0, i + 7.5)
+    for i in range(96, 128, 8):
+        yield Note(2, i)
+        yield Note(2, i)
     # time = 0
     # for i in range(4):
     #     for p, d in melody1:
@@ -111,11 +117,43 @@ notes: List[Note] = list(undertale_generator())
 sub_bars = 4
 
 track_finger_count = [0]*8
-measurements = []
+last_track_finger_count = [0]*8
 last_time = time.perf_counter()
 
 wave_img = [pygame.surface.Surface((0, 0))]
 total_pixels = 0
+
+
+expected_lines_press = [0]*8
+expected_lines_hold = [0]*8
+def get_expected_lines():
+    global last_track_finger_count
+    LENIENCY = 0.2
+    for i in range(8):
+        expected_lines_press[i] = 0
+        expected_lines_hold[i] = 0
+    for n in notes:
+        if scroll*sub_bars - LENIENCY < n.y < scroll*sub_bars + LENIENCY:
+            for i in range(n.x, n.x+n.w):
+                expected_lines_press[i] = max(1-abs(scroll*sub_bars - n.y)/LENIENCY, expected_lines_press[i])
+        if type(n) == LongNote:
+            if n.y - LENIENCY < scroll * sub_bars < n.y + n.h + LENIENCY:
+                for i in range(n.x, n.x + n.w):
+                    if n.y < scroll * sub_bars < n.y + n.h:
+                        expected_lines_hold[i] = max(1, expected_lines_hold[i])
+                    elif n.y - LENIENCY < scroll * sub_bars:
+                        expected_lines_hold[i] = max(1-abs(scroll * sub_bars - n.y)/LENIENCY, expected_lines_hold[i])
+                    elif scroll * sub_bars < n.y + n.h + LENIENCY:
+                        expected_lines_hold[i] = max(1-abs(n.y+n.h - scroll * sub_bars)/LENIENCY, expected_lines_hold[i])
+
+    for i in range(8):
+        if track_finger_count[i] > last_track_finger_count[i]:
+            if expected_lines_press[i] > 0:
+                tick_mixer.play()
+
+    last_track_finger_count = list(track_finger_count)
+
+
 def generate_wave():
     global note_width, note_space, wave_img, total_pixels
 
@@ -173,6 +211,18 @@ def draw(screen: pygame.Surface):
             screen.fill((64, 64, 64), (track_x, screen_height - i - note_height / 10 - l * note_space, track_width, note_height / 5))
         screen.fill((128, 128, 128), (track_x, screen_height - i - note_height / 6, track_width, note_height / 3))
 
+    for i in range(8):
+        press = expected_lines_press[i] * 255
+        hold = expected_lines_hold[i] * 255
+
+        if press > hold:
+            c = (int(press*0.2), press, int(press*0.2))
+        else:
+            c = (int(hold * 0.2), hold, hold)
+        pygame.draw.rect(screen, c, pygame.Rect(100 * i, 5, 100, 20))
+
+        c = 255 if track_finger_count[i] else 0
+        pygame.draw.rect(screen, (c, c, c), pygame.Rect(100 * i, 30, 100, 20))
 
 
     # pygame.draw.line(screen, (255, 255, 255), (track_x, scroll+note_space), (track_x, height))

@@ -65,6 +65,7 @@ def run():
         bitscreen = pygame.surface.Surface((WIDTH, HEIGHT))
         bitscreen.fill((0, 0, 0))
 
+        track.get_expected_lines()
         track.draw(bitscreen)
 
         screen.blit(bitscreen, [0, 0])
