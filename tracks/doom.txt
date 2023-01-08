@@ -1,0 +1,3 @@
+BPM = 226.4/4
+sub_bars = 4
+track_scroll_offset = 1.04
