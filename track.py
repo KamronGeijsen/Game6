@@ -6,14 +6,12 @@ import numpy as np
 import scipy
 
 
-
-
 BPM = 148/4
-slider_speed = 1
+slider_speed = 4
 
 screen_height = 100
 screen_width = 100
-track_width = 1000*0.5
+track_width = 1000*0.75
 note_width = track_width/8
 note_height = note_width/5
 note_space = note_width*slider_speed
@@ -33,17 +31,18 @@ print(sample_rate)
 # pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.mixer.init()
 track_mixer = pygame.mixer.Sound(file)
-tick_mixer = pygame.mixer.Sound("tick1.mp3")
+tick_mixer = pygame.mixer.Sound("tick1.wav")
 
 sub_bars = 4
 
-# def start_from():
-#     sec_delay = (scroll+track_scroll_offset)/ (BPM / 60 * sub_bars)
-#     sample_delay = sample_rate * sec_delay
-#     print(sec_delay, sample_delay)
-#     print(len(pygame.mixer.Sound("tick1.mp3").get_raw()))
-#     raw_data = pygame.mixer.Sound("tick1.mp3").get_raw()[int(sample_delay):]
-#     return pygame.mixer.Sound(buffer=raw_data)
+debug_hits = []
+
+
+def start_from():
+    sec_delay = (scroll+track_scroll_offset) / (BPM / 60)
+    sample_delay = sample_rate * sec_delay
+    raw_data = samples[int(sample_delay):]
+    return pygame.mixer.Sound(buffer=raw_data)
 
 
 class Note:
@@ -110,11 +109,113 @@ def undertale_generator():
         yield Note(n+3, i + 5)
         for p, d in melody2:
             yield Note(n+p, 6 + i + d)
-    for i in range(96, 128, 8):
-        yield LongNote(3, i, 0.5)
-        yield Note(2, i+0.75)
-        yield Note(3, i+1)
-        yield LongNote(4, i+1.25, .5)
+    for n, i in enumerate(range(96, 160, 16)):
+        yield Note(4, i)
+        yield Note(5, i + 0.5)
+        yield Note(4, i + 1.0)
+        yield Note(2, i + 1.25)
+        yield Note(2, i + 1.75)
+        yield Note(3, i + 2.25)
+        yield Note(4, i + 2.5)
+        yield Note(5, i + 3)
+        yield Note(4, i + 3.5)
+        yield Note(2, i + 4.0)
+        yield Note(3, i + 4.5)
+        yield Note(4, i + 5.00)
+        yield Note(5, i + 5.25)
+        yield Note(4, i + 5.5)
+        yield Note(4, i + 6.0)
+        yield Note(3, i + 6.25)
+        yield Note(2, i + 6.5)
+        yield Note(3, i + 7)
+        yield Note(2, i + 7.5)
+
+        yield Note(2, i + 8.0)
+        yield Note(3, i + 8.25)
+        yield Note(4, i + 8.5)
+        yield Note(5, i + 8.75)
+        yield Note(2, i + 9)
+
+        if n == 3:
+            yield Note(2, i + 10)
+            yield Note(3, i + 10.25)
+            yield Note(4, i + 10.5)
+            yield Note(5, i + 10.75)
+            yield Note(2, i + 11)
+
+            yield Note(2, i + 12)
+            yield Note(3, i + 12.25)
+            yield Note(4, i + 12.5)
+            yield Note(5, i + 12.75)
+
+            yield Note(2, i + 13)
+            yield Note(3, i + 13.25)
+            yield Note(4, i + 13.5)
+            yield Note(5, i + 13.75)
+
+            yield Note(2, i + 14)
+        else:
+            yield Note(3, i + 12)
+            yield Note(4, i + 12.125)
+            yield Note(5, i + 12.25)
+            yield Note(5, i + 13)
+
+            yield Note(4, i + 13.5)
+            yield Note(3, i + 14)
+            yield Note(3, i + 14.5)
+            yield Note(2, i + 15)
+
+            yield Note(3, i + 15.5)
+
+        for n, i in enumerate(range(96, 160, 8)):
+            yield Note(0, i, 2)
+            if n == 7:
+                yield Note(0, i + 2, 2)
+                yield Note(0, i + 4, 2)
+                yield Note(0, i + 5, 2)
+                yield Note(0, i + 6, 2)
+
+        yield Note(2, 160 - 0.5)
+        yield Note(3, 160 - 0.325)
+        yield Note(4, 160 - 0.25)
+        yield Note(5, 160 - 0.125)
+        for n, i in enumerate(range(160, 224, 16)):
+            yield Note(0, i, 8)
+            yield LongNote(6, i, 2, 2)
+            yield LongNote(4, i, 2, 2)
+            yield LongNote(5, i + 2, 2, 2)
+            yield LongNote(3, i + 2, 2, 2)
+            yield Note(0, i+4, 8)
+            yield LongNote(3, i + 4, 3.5)
+            yield LongNote(5, i + 4, 1)
+            yield LongNote(4, i + 5, 1)
+
+            yield LongNote(7, i + 6, 1)
+            yield LongNote(6, i + 7, 1)
+            yield Note(0, i + 8, 8)
+            yield LongNote(5, i + 8, 1)
+
+        for n, i in enumerate(range(160, 224, 4)):
+            if n%4 == 1:
+                yield Note(0, i+3, 2)
+            if n%4 == 2:
+                yield Note(0, i+2, 2)
+            if n%4 == 3:
+                yield Note(0, i + 1, 2)
+                yield Note(0, i + 2, 2)
+                yield Note(0, i + 3, 2)
+            yield Note(0, i, 2)
+
+
+        # yield LongNote(3, i, 0.5)
+        # yield Note(2, i+0.75)
+        # yield Note(3, i+1)
+        # yield LongNote(4, i+1.25, .5)
+        #
+        # yield LongNote(4, i+2, 0.5)
+        # yield Note(5, i + 2.75)
+        # yield Note(4, i + 3)
+        # yield LongNote(3, i + 3.25, .5)
 
 
     # time = 0
@@ -162,6 +263,14 @@ expected_lines_press = [0]*8
 expected_lines_hold = [0]*8
 
 
+last_time_animation = 0
+animations = []
+
+class Animation:
+    def __init__(self, t, x, y, s):
+        self.t, self.x, self.y, self.s = t, x, y, s
+
+
 def get_expected_lines():
     global last_track_finger_count
     LENIENCY = 0.2
@@ -185,6 +294,8 @@ def get_expected_lines():
     for i in range(8):
         if track_finger_count[i] > last_track_finger_count[i]:
             if expected_lines_press[i] > 0:
+                animations.append(Animation(expected_lines_press[i], i, 0, expected_lines_press[i]))
+                debug_hits.append(expected_lines_press[i])
                 tick_mixer.play()
 
     last_track_finger_count = list(track_finger_count)
@@ -193,6 +304,7 @@ def get_expected_lines():
 def generate_wave():
     global note_width, note_space, wave_img, total_pixels, last_time, track_mixer
 
+    track_mixer.stop()
     img_width = note_width
     total_pixels = len(samples)/sample_rate*(BPM/60)*note_space*sub_bars
     wave_img = [pygame.surface.Surface((img_width, 32768)) for _ in range(int(total_pixels)//32768+1)]
@@ -207,11 +319,9 @@ def generate_wave():
         l = int(i)
         n-=1
     last_time = time.perf_counter()
-    # if scroll > 0:
-    #     track_mixer.stop()
-    #     print(scroll)
-    #     track_mixer = start_from()
-    #     track_mixer.play()
+    if scroll > 0:
+        track_mixer = start_from()
+        track_mixer.play()
 
 
 def scroller():
@@ -241,8 +351,27 @@ def resize(event: pygame.event):
     track_bar_scroll = track_bar / (note_space*4)
 
 
-# def draw_feedback_animation(screen: pygame.Surface):
-#     screen.
+
+
+def draw_feedback_animation(screen: pygame.Surface):
+    global last_time_animation, animations
+    current_time = time.perf_counter()
+    interval = (current_time - last_time_animation)
+    last_time_animation = current_time
+
+    animations = [a for a in animations if a.t > 0]
+    for a in animations:
+        r = (a.s-a.t)*note_width*2
+        print(r)
+        s = pygame.Surface((r, r), pygame.SRCALPHA)
+        s.set_alpha(a.t*255)
+        pygame.draw.ellipse(s, (255, 255, 255), (0, 0, r, r))
+        screen.blit(s, (track_x+note_width*a.x-r/2+note_width*.5, screen_height-track_bar-r/2))
+        a.t -= interval*2
+
+    for n, h in enumerate(debug_hits[-10:]):
+        screen.fill((255, 255, 255), (0, 100+n*10, h*100, 10))
+
 
 
 def draw(screen: pygame.Surface):
@@ -287,14 +416,16 @@ def draw(screen: pygame.Surface):
     for n in notes:
         if type(n) == LongNote:
             pygame.draw.rect(screen, (128, 0, 64), pygame.Rect(
-                track_x + n.x * note_width,
+                track_x + n.x * note_width + note_width*0.05,
                 screen_height-track_bar - n.y * note_space - note_height / 2 + note_space * sub_bars * scroll - note_space*n.h,
-                n.w * note_width, note_height+note_space*n.h))
+                n.w * note_width*0.9, note_height+note_space*n.h))
         else:
             pygame.draw.rect(screen, (192, 32, 32), pygame.Rect(
-                track_x + n.x * note_width,
+                track_x + n.x * note_width + note_width*0.05,
                 screen_height - track_bar - n.y * note_space - note_height / 2 + note_space * sub_bars * scroll,
-                n.w * note_width, note_height))
+                n.w * note_width - note_width*0.1, note_height))
+
+    draw_feedback_animation(screen)
 
     # WAV
 
