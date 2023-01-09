@@ -7,7 +7,7 @@ import scipy
 
 
 BPM = 148/4
-slider_speed = 2
+slider_speed = 4
 
 screen_height = 100
 screen_width = 100
@@ -15,9 +15,9 @@ track_width = 1000*0.75
 note_width = track_width/8
 note_height = note_width/5
 note_space = note_width*slider_speed
-# scroll = -2
-scroll = 38
-
+scroll = -2
+# scroll = 48
+# scroll = 38
 
 file = "tracks/Toby Fox - Undertale - Death by Glamour.wav"
 sample_rate, samples = scipy.io.wavfile.read(file)
@@ -181,23 +181,40 @@ def undertale_generator():
         yield Note(4, 160 - 0.25)
         yield Note(5, 160 - 0.125)
         for n, i in enumerate(range(160, 224, 16)):
-            yield Note(0, i, 8)
-            yield LongNote(6, i, 2, 2)
-            yield LongNote(4, i, 2, 2)
-            yield LongNote(5, i + 2, 2, 2)
-            yield LongNote(3, i + 2, 2, 2)
-            yield Note(0, i+4, 8)
-            yield LongNote(2, i + 4, 3)
-            yield LongNote(5, i + 4, 1)
-            yield LongNote(4, i + 5, 1)
-            yield LongNote(7, i + 6, 1)
-            yield LongNote(6, i + 7, 1)
-            yield Note(3, i + 7)
-            yield LongNote(2, i + 8, 2)
-            yield LongNote(5, i + 8, 2)
-            yield LongNote(4, i + 10, 2)
-            # yield LongNote(3, i + 8, 4)
-            yield Note(3, i + 10)
+            if n == 0 or n == 2:
+                yield Note(0, i, 8)
+                yield LongNote(6, i, 2, 2)
+                yield LongNote(4, i, 2, 2)
+                yield LongNote(5, i + 2, 2, 2)
+                yield LongNote(3, i + 2, 2, 2)
+                yield Note(0, i+4, 8)
+                yield LongNote(2, i + 4, 3)
+                yield LongNote(5, i + 4, 1)
+                yield LongNote(4, i + 5, 1)
+                yield LongNote(7, i + 6, 1)
+                yield LongNote(6, i + 7, 1)
+                yield Note(3, i + 7)
+                yield LongNote(2, i + 8, 2)
+                yield LongNote(5, i + 8, 2)
+                yield LongNote(4, i + 10, 2)
+                yield Note(3, i + 10)
+            else:
+                yield Note(0, i, 8)
+                yield LongNote(0, i, 2, 2)
+                yield LongNote(2, i, 2, 2)
+                yield LongNote(1, i + 2, 2, 2)
+                yield LongNote(3, i + 2, 2, 2)
+                yield Note(0, i + 4, 8)
+                yield LongNote(5, i + 4, 3)
+                yield LongNote(2, i + 4, 1)
+                yield LongNote(3, i + 5, 1)
+                yield LongNote(0, i + 6, 1)
+                yield LongNote(1, i + 7, 1)
+                yield Note(4, i + 7)
+                yield LongNote(5, i + 8, 2)
+                yield LongNote(2, i + 8, 2)
+                yield LongNote(3, i + 10, 2)
+                yield Note(4, i + 10)
             if n == 0 or n == 2:
                 for l in range(4):
                     yield Note(1, i + 12.00 + l, 2)
@@ -212,6 +229,61 @@ def undertale_generator():
                     yield Note(2, i + 12.125 + l, 1)
                     yield Note(1, i + 12.25 + l, 1)
                     yield Note(0, i + 12.325 + l, 1)
+        yield Note(3, 224 - 4, 2)
+        yield Note(3, 224 - 3.25, 2)
+        yield Note(2, 224 - 2.5, 4)
+        yield Note(1, 224 - 2, 6)
+        yield Note(1, 224 - 1.825, 6)
+        yield Note(0, 224 - 1, 8)
+
+        for n, i in enumerate(range(224, 288, 16)):
+            if n == 1 or n == 3:
+                yield Note(6, i+0.5, 2)
+            else:
+                yield Note(6, i, 2)
+            yield Note(6, i+1, 2)
+            yield Note(5, i+1.5, 2)
+            yield Note(6, i+1.75, 2)
+
+            yield Note(5, i + 3, 2)
+            yield Note(3, i + 3.5, 2)
+            yield Note(1, i + 4, 2)
+            yield Note(3, i + 4.5, 2)
+            yield Note(5, i + 5, 2)
+            yield Note(3, i + 5.75, 2)
+            yield Note(1, i + 6, 2)
+
+            yield Note(1, i + 3, 2)
+            yield Note(5, i + 4, 2)
+            yield Note(1, i + 5, 2)
+            yield Note(5, i + 6, 2)
+
+            yield Note(4, i + 7)
+            yield Note(3, i + 7.5)
+            yield Note(3, i + 8, 3)
+            yield Note(2, i + 8.75, 3)
+            yield Note(3, i + 9.5, 3)
+            yield Note(2, i + 10, 3)
+
+            yield Note(3, i + 11)
+            yield Note(4, i + 11.5)
+            yield Note(2, i + 12, 3)
+            yield Note(3, i + 12.75, 3)
+            yield Note(2, i + 13.5, 3)
+            yield Note(3, i + 14, 3)
+
+        for i in range(4):
+            for p, d in melody1:
+                yield Note(p*2, 288+d+i*8, 2)
+        for p, d in melody1:
+            yield Note(p + 2, 320 + d)
+        # for n, i in enumerate(range(224, 288)):
+        #     if n//16 % 2 == 0:
+        #         yield Note(0+n//4%2, i)
+        #         yield Note(2+n//4%2, i+.5)
+        #     else:
+        #         yield Note(7-n//8%2, i)
+        #         yield Note(5-n//8%2, i + .5)
 
 
 

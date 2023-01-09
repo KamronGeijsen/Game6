@@ -44,6 +44,8 @@ def run():
                     track_num = int((event.x*WIDTH-track.track_x) / track.note_width)
                     track.track_finger_count[track_num] += 1
                     # print("DOWN", track_num, track.track_finger_count)
+                if event.x > track.screen_width-100 and event.y < 100:
+                    exit()
             elif event.type == pygame.FINGERUP:
                 # print("UP", event.x)
                 if track.track_x < event.x * WIDTH < track.track_x+track.track_width:
