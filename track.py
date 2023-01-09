@@ -7,7 +7,7 @@ import scipy
 
 
 BPM = 148/4
-slider_speed = 4
+slider_speed = 2
 
 screen_height = 100
 screen_width = 100
@@ -15,7 +15,8 @@ track_width = 1000*0.75
 note_width = track_width/8
 note_height = note_width/5
 note_space = note_width*slider_speed
-scroll = -2
+# scroll = -2
+scroll = 38
 
 
 file = "tracks/Toby Fox - Undertale - Death by Glamour.wav"
@@ -186,25 +187,44 @@ def undertale_generator():
             yield LongNote(5, i + 2, 2, 2)
             yield LongNote(3, i + 2, 2, 2)
             yield Note(0, i+4, 8)
-            yield LongNote(3, i + 4, 3.5)
+            yield LongNote(2, i + 4, 3)
             yield LongNote(5, i + 4, 1)
             yield LongNote(4, i + 5, 1)
-
             yield LongNote(7, i + 6, 1)
             yield LongNote(6, i + 7, 1)
-            yield Note(0, i + 8, 8)
-            yield LongNote(5, i + 8, 1)
+            yield Note(3, i + 7)
+            yield LongNote(2, i + 8, 2)
+            yield LongNote(5, i + 8, 2)
+            yield LongNote(4, i + 10, 2)
+            # yield LongNote(3, i + 8, 4)
+            yield Note(3, i + 10)
+            if n == 0 or n == 2:
+                for l in range(4):
+                    yield Note(1, i + 12.00 + l, 2)
+                    yield Note(4, i + 12.00 + l, 1)
+                    yield Note(5, i + 12.125 + l, 1)
+                    yield Note(6, i + 12.25 + l, 1)
+                    yield Note(7, i + 12.325 + l, 1)
+            elif n == 1:
+                for l in range(4):
+                    yield Note(5, i + 12.00 + l, 2)
+                    yield Note(3, i + 12.00 + l, 1)
+                    yield Note(2, i + 12.125 + l, 1)
+                    yield Note(1, i + 12.25 + l, 1)
+                    yield Note(0, i + 12.325 + l, 1)
 
-        for n, i in enumerate(range(160, 224, 4)):
-            if n%4 == 1:
-                yield Note(0, i+3, 2)
-            if n%4 == 2:
-                yield Note(0, i+2, 2)
-            if n%4 == 3:
-                yield Note(0, i + 1, 2)
-                yield Note(0, i + 2, 2)
-                yield Note(0, i + 3, 2)
-            yield Note(0, i, 2)
+
+
+        # for n, i in enumerate(range(160, 224, 4)):
+        #     if n%4 == 1:
+        #         yield Note(0, i+3, 2)
+        #     if n%4 == 2:
+        #         yield Note(0, i+2, 2)
+        #     if n%4 == 3:
+        #         yield Note(0, i + 1, 2)
+        #         yield Note(0, i + 2, 2)
+        #         yield Note(0, i + 3, 2)
+        #     yield Note(0, i, 2)
 
 
         # yield LongNote(3, i, 0.5)
