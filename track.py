@@ -5,7 +5,6 @@ import pygame
 import numpy as np
 import scipy
 
-
 BPM = 148/4
 slider_speed = 4
 
@@ -16,6 +15,7 @@ note_width = track_width/8
 note_height = note_width/5
 note_space = note_width*slider_speed
 scroll = -2
+# scroll = 20
 # scroll = 48
 # scroll = 38
 
@@ -29,12 +29,15 @@ track_scroll_offset = 0.09
 track_bar_scroll = track_bar / (note_space*4)
 
 print(sample_rate)
-# pygame.mixer.pre_init(44100, -16, 2, 512)
+pygame.mixer.pre_init(48000, -16, 2, 512)
 pygame.mixer.init()
 track_mixer = pygame.mixer.Sound(file)
 tick_mixer = pygame.mixer.Sound("tick1.wav")
+# print(pygame.mixer.get_init())
 
 sub_bars = 4
+combo = 0
+score = 0
 
 debug_hits = []
 
@@ -44,6 +47,22 @@ def start_from():
     sample_delay = sample_rate * sec_delay
     raw_data = samples[int(sample_delay):]
     return pygame.mixer.Sound(buffer=raw_data)
+
+
+def set_tick_volume(m):
+    global tick_mixer
+    sample_rate, samples = scipy.io.wavfile.read("tick1.wav")
+    # print(type(tick_mixer.get_raw()))
+    print(len(samples))
+    dt = np.dtype(int)
+    dt = dt.newbyteorder('<')
+    samples = np.frombuffer(tick_mixer.get_raw(), dtype=dt)
+    print(len(samples))
+    samples = samples*m
+    print(sample_rate, pygame.mixer.get_init())
+    tick_mixer = pygame.mixer.Sound(buffer=samples)
+
+set_tick_volume(2)
 
 
 class Note:
@@ -78,10 +97,18 @@ def undertale_generator():
         (2, 6.5),
     ]
 
-    for i in range(16):
-        yield Note(3, i, 2)
-    for i in range(16):
-        yield Note(2, i+16, 4)
+    for p, d in melody1:
+        yield Note(p+2, d)
+    for p, d in melody1:
+        yield Note(p+2, d+8)
+    for p, d in melody1:
+        yield Note(p*2, d+16, 2)
+    for p, d in melody1:
+        yield Note(p*2, d+24, 2)
+    # for i in range(16):
+    #     yield Note(3, i, 2)
+    # for i in range(16):
+    #     yield Note(2, i+16, 4)
     # for i in range(16):
     yield LongNote(3, 32, 6)
     yield LongNote(4, 38, 1)
@@ -101,15 +128,15 @@ def undertale_generator():
         (1, 0.5),
         (0, 0.75),
     ]
-    for n, i in enumerate(range(64, 96, 8)):
-        yield Note(n+0, i + 0)
-        yield Note(n+3, i + 1)
-        for p, d in melody2:
-            yield Note(n+p, 2 + i + d)
-        yield Note(n+0, i + 4.5)
-        yield Note(n+3, i + 5)
-        for p, d in melody2:
-            yield Note(n+p, 6 + i + d)
+    # for n, i in enumerate(range(64, 96, 8)):
+    #     yield Note(n+0, i + 0)
+    #     yield Note(n+3, i + 1)
+    #     for p, d in melody2:
+    #         yield Note(n+p, 2 + i + d)
+    #     yield Note(n+0, i + 4.5)
+    #     yield Note(n+3, i + 5)
+    #     for p, d in melody2:
+    #         yield Note(n+p, 6 + i + d)
     for n, i in enumerate(range(96, 160, 16)):
         yield Note(4, i)
         yield Note(5, i + 0.5)
@@ -272,10 +299,17 @@ def undertale_generator():
             yield Note(2, i + 13.5, 3)
             yield Note(3, i + 14, 3)
 
+            if n == 1 or n == 3:
+                yield Note(4, i+15)
+                yield Note(5, i + 15.5)
+            else:
+                yield Note(4, i + 15)
+                yield Note(3, i + 15.5)
+
         for i in range(4):
             for p, d in melody1:
                 yield Note(p*2, 288+d+i*8, 2)
-        for p, d in melody1:
+        for p, d in melody1[:8]:
             yield Note(p + 2, 320 + d)
         # for n, i in enumerate(range(224, 288)):
         #     if n//16 % 2 == 0:
@@ -318,27 +352,27 @@ def undertale_generator():
     # for i in range(4):
     #     for p, d in melody1:
     #         yield Note(p*2, time+d+i*8, 2)
-    # melody2 = [
-    #     (3, 0),
-    #     (2, 0.25),
-    #     (1, 0.5),
-    #     (0, 0.75),
-    #     (1, 1),
-    # ]
-    # for n, i in enumerate(range(64, 96, 8)):
-    #     yield Note(n+0, i + 0)
-    #     yield Note(n+1, i + 0.5)
-    #     yield Note(n+3, i + 1)
-    #     yield Note(n+2, i + 1.5)
-    #     for p, d in melody2:
-    #         yield Note(n+p, 2 + i + d)
-    #     yield Note(n+0, i + 3.5)
-    #     yield Note(n+0, i + 4.5)
-    #     yield Note(n+3, i + 5)
-    #     yield Note(n+2, i + 5.5)
-    #     for p, d in melody2:
-    #         yield Note(n+p, 6 + i + d)
-    #     yield Note(n+0, i + 7.5)
+    melody2 = [
+        (3, 0),
+        (2, 0.25),
+        (1, 0.5),
+        (0, 0.75),
+        (1, 1),
+    ]
+    for n, i in enumerate(range(64, 96, 8)):
+        yield Note(n+0, i + 0)
+        yield Note(n+1, i + 0.5)
+        yield Note(n+3, i + 1)
+        yield Note(n+2, i + 1.5)
+        for p, d in melody2:
+            yield Note(n+p, 2 + i + d)
+        yield Note(n+0, i + 3.5)
+        yield Note(n+0, i + 4.5)
+        yield Note(n+3, i + 5)
+        yield Note(n+2, i + 5.5)
+        for p, d in melody2:
+            yield Note(n+p, 6 + i + d)
+        yield Note(n+0, i + 7.5)
 
 
 notes: List[Note] = list(undertale_generator())
@@ -364,7 +398,7 @@ class Animation:
 
 
 def get_expected_lines():
-    global last_track_finger_count
+    global last_track_finger_count, combo, score
     LENIENCY = 0.2
     for i in range(8):
         expected_lines_press[i] = 0
@@ -389,6 +423,10 @@ def get_expected_lines():
                 animations.append(Animation(expected_lines_press[i], i, 0, expected_lines_press[i]))
                 debug_hits.append(expected_lines_press[i])
                 tick_mixer.play()
+                combo += 1
+                score += expected_lines_press[i] * (1+combo/100)
+            else:
+                combo = 0
 
     last_track_finger_count = list(track_finger_count)
 
@@ -401,6 +439,7 @@ def generate_wave():
     total_pixels = len(samples)/sample_rate*(BPM/60)*note_space*sub_bars
     wave_img = [pygame.surface.Surface((img_width, 32768)) for _ in range(int(total_pixels)//32768+1)]
     samples_per_pixel = len(samples) / total_pixels
+    print("tot:",total_pixels)
     l = 0
     n = int(total_pixels)-1
     for i in np.arange(samples_per_pixel, len(samples), samples_per_pixel):
@@ -454,7 +493,6 @@ def draw_feedback_animation(screen: pygame.Surface):
     animations = [a for a in animations if a.t > 0]
     for a in animations:
         r = (a.s-a.t)*note_width*2
-        print(r)
         s = pygame.Surface((r, r), pygame.SRCALPHA)
         s.set_alpha(a.t*255)
         pygame.draw.ellipse(s, (255, 255, 255), (0, 0, r, r))
@@ -481,7 +519,7 @@ def draw(screen: pygame.Surface):
 
     # Line Beat and quarter beats (horiz lines)
 
-    for i in np.arange(-(scroll-track_bar_scroll-int(scroll))*note_space*sub_bars, screen_height, note_space*sub_bars):
+    for i in np.arange(-(scroll-track_bar_scroll-np.floor(scroll))*note_space*sub_bars, screen_height, note_space*sub_bars):
         for l in range(sub_bars):
             pygame.draw.rect(screen, (64, 64, 64), pygame.Rect(track_x, screen_height - i - note_height / 10 - l * note_space, track_width, note_height / 5))
         pygame.draw.rect(screen, (128, 128, 128), pygame.Rect(track_x, screen_height - i - note_height / 6, track_width, note_height / 3))
@@ -501,7 +539,7 @@ def draw(screen: pygame.Surface):
         c = 255 if track_finger_count[i] else 0
         pygame.draw.rect(screen, (c, c, c), pygame.Rect(50 * i, 30, 50, 20))
         pygame.draw.line(screen, (128, 128, 128), (50 * i+50, 0), (50 * i+50, 50))
-        pygame.draw.line(screen, (128, 128, 128), (50 * i , 0), (50 * i, 50))
+        pygame.draw.line(screen, (128, 128, 128), (50 * i, 0), (50 * i, 50))
 
     # Notes
 
@@ -522,10 +560,30 @@ def draw(screen: pygame.Surface):
     # WAV
 
     i = -(screen_height-total_pixels+note_space*sub_bars*(scroll+track_scroll_offset))
-    screen.blit(wave_img[int(i)//32768], [track_x + track_width, -(i%32768) - track_bar])
+    if 0 <= int(i)//32768 < len(wave_img):
+        screen.blit(wave_img[int(i)//32768], [track_x + track_width, -(i%32768) - track_bar])
     if 32768-i%32768 < screen_height and i < total_pixels:
         screen.blit(wave_img[int(i) // 32768 + 1], [track_x + track_width, -(i % 32768) + 32768 - track_bar])
-    pygame.draw.line(screen, (255, 255, 255), (track_x, screen_height-track_bar), (track_x+track_width, screen_height-track_bar))
+
+    # The track bar
+
+    bar_fade = int(note_height)*2
+    temp_surface = pygame.Surface((track_width, bar_fade), pygame.SRCALPHA)
+    temp_surface.fill([0, 0, 0, 0])
+    for i in range(bar_fade):
+        t = (bar_fade-abs(i))/bar_fade
+        pygame.draw.line(temp_surface, (255, 255, 255, int(t*t*t*255)), (0, i),
+                         (track_width, i))
+    screen.blit(temp_surface, (track_x, screen_height-track_bar))
+
+    # Combo text
+
+    font = pygame.font.Font(pygame.font.get_default_font(), 32)
+    text = font.render('Combo ' + str(combo), True, (255,255,255))
+    screen.blit(text, dest=(0, 200))
+
+    text = font.render(f'Score {score*1000:.2f}', True, (255, 255, 255))
+    screen.blit(text, dest=(0, 250))
 
     # Vertical borders of the track
 
